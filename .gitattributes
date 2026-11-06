@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+# Windows 脚本要保持 CRLF，否则 .bat 的标签/块会解析出错
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制
+*.png binary
+*.jpg binary
+*.pdf binary
+*.docx binary

@@ -1,0 +1,22 @@
+# 运行产物
+tools/out/
+__pycache__/
+*.pyc
+
+# 未完成的实验代码，暂不公开
+tools/cloud/
+
+# 真实密钥
+.env
+.env.local
+
+# 个人简历相关（含手机号/邮箱，不公开）
+docs/
+*.docx
+*.pdf
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

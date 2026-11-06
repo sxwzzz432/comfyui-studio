@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ComfyUI Studio</title>
+<style>
+  :root{
+    --bg0:#0e0f21; --bg1:#13152c; --bg2:#191b31; --bg3:#22253f;
+    --heading:#f5f3c2; --text:#ffffff; --muted:rgba(255,255,255,.55);
+    --chip:#e8e4f0; --danger:#ff7878; --ok:#34d399;
+    color-scheme: dark;
+    font-family:"Source Sans 3","Source Sans Pro","Segoe UI","Microsoft YaHei UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg0);color:var(--text)}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;font-weight:600}
+  h1,h2,h3{margin:0;color:var(--heading);font-family:Eczar,"Times New Roman",serif;
+           font-weight:600;letter-spacing:.5px}
+  input,textarea,select{background:var(--bg0);border:1px solid var(--bg3);border-radius:4px;
+                        padding:8px 10px;width:100%;min-width:0;font-size:.875rem}
+  textarea{resize:none;overflow:auto;font-family:ui-monospace,Consolas,monospace;
+           font-size:12.5px;line-height:1.6}
+  input::placeholder,textarea::placeholder{color:#ffffff77}
+  textarea::-webkit-resizer{background:transparent}
+  ::-webkit-scrollbar{width:14px;height:14px}
+  ::-webkit-scrollbar-thumb{background-color:var(--bg3);border:5px solid transparent;
+                            background-clip:padding-box;border-radius:15px}
+  ::-webkit-scrollbar-track{background:none}
+
+  .app{height:100%;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;gap:10px;padding:10px 14px 8px 16px;background:var(--bg0)}
+  .top h1{font-size:15px}
+  .pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg2);
+        border:1px solid var(--bg3);border-radius:999px;padding:5px 12px;
+        font-size:12px;color:var(--text);font-weight:600;white-space:nowrap}
+  .pill.click:hover{border-color:var(--heading);color:var(--heading)}
+  .pill.dim{color:var(--muted);background:transparent}
+  .grow{flex:1}
+
+  .page{flex:1;min-height:0;display:flex;background:var(--bg0)}
+
+  /* ============ 左：参数 ============ */
+  .left{width:412px;min-width:392px;background:var(--bg1);display:flex;flex-direction:column;
+        border-right:1px solid var(--bg3)}
+  .left-scroll{flex:1;min-height:0;overflow:auto;padding:10px 14px 14px;
+               display:flex;flex-direction:column;gap:12px}
+  .box{background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:12px 14px}
+  .box > .bh{display:flex;align-items:center;gap:8px;margin:0 0 10px;cursor:pointer;user-select:none}
+  .box > .bh h2{font-size:15px;margin:0}
+  .box > .bh .sum{margin-left:auto;color:var(--muted);font-size:11.5px;font-weight:600;
+                  font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;
+                  text-overflow:ellipsis;max-width:190px}
+  .box > .bh .arw{color:var(--heading);font-size:10px;flex:none}
+  .box.sampler{border-color:#2d3a55}
+  .box.sampler > .bh h2{color:#a8c6ff}
+  .bbody{display:flex;flex-direction:column;gap:10px}
+  .f{display:flex;flex-direction:column;gap:5px}
+  .f > label{font-size:12px;color:var(--muted)}
+  .f .hint{font-size:11px;color:#6b7290;line-height:1.5}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  /* 分辨率：宽 × 高 一行，预设另一行，避免文字被挤扁 */
+  .sz-row{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr);
+          gap:6px;align-items:center}
+  .sz-row input[type=number]{text-align:center;padding-left:4px;padding-right:4px}
+  .sz-row .sz-x{text-align:center;color:var(--muted);font-size:12px;line-height:1}
+  .sz-preset{margin-top:6px}
+  .seedrow{display:flex;gap:6px;align-items:center}
+  .seedrow button{width:auto;padding:8px 10px;white-space:nowrap;font-size:12px}
+  .iconbtn{background:var(--bg2);border:1px solid var(--bg3);border-radius:6px;
+           width:36px;height:36px;display:grid;place-items:center;flex:none;padding:0;
+           color:rgba(255,255,255,.78)}
+  .iconbtn:hover{border-color:var(--heading);color:var(--heading)}
+
+  /* LoRA */
+  .lora-head,.lora-row{display:grid;grid-template-columns:20px 1fr 64px 20px;gap:6px;align-items:center}
+  .lora-head{font-size:11px;color:var(--muted);padding:0 2px 4px}
+  .lora-row{margin-bottom:5px}
+  .lora-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--heading);cursor:pointer}
+  .lora-row input[type=number]{padding:6px 6px;text-align:right;font-variant-numeric:tabular-nums}
+  .lora-row input[type=text]{padding:6px 8px}
+  .lora-row .del{background:none;border:0;color:var(--muted);font-size:15px;line-height:1;padding:0}
+  .lora-row .del:hover{color:var(--danger)}
+  .lora-row.off input[type=text]{opacity:.42;text-decoration:line-through}
+  .lora-row.off input[type=number]{opacity:.42}
+  #loraBox{max-height:232px;overflow:auto;padding-right:2px}
+  .addbtn{background:var(--bg0);border:1px dashed var(--bg3);border-radius:4px;
+          padding:6px;font-size:12px;color:var(--muted);width:100%}
+  .addbtn:hover{border-color:var(--heading);color:var(--heading)}
+
+  /* 底部 dock */
+  .dock{flex:none;border-top:1px solid var(--bg3);padding:10px 14px 12px;
+        background:var(--bg1);display:flex;flex-direction:column;gap:8px;position:relative}
+  .gen-row{display:flex;gap:8px;align-items:stretch}
+  .generate{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;
+            background:var(--heading);color:var(--bg0);border:0;border-radius:8px;
+            padding:11px 16px;font-weight:700;font-size:15px;letter-spacing:.5px}
+  .generate:hover:not(:disabled){filter:brightness(1.05)}
+  .generate:disabled{opacity:.55;cursor:wait}
+  .generate .kbd{background:rgba(14,15,33,.12);border-radius:5px;padding:1px 7px;
+                 font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+  .prog{height:7px;border-radius:99px;background:#2b2f4d;
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden}
+  .prog > i{display:block;height:100%;width:0;background:var(--heading);
+            border-radius:99px;transition:width .16s ease-out;
+            box-shadow:0 0 10px rgba(245,243,194,.45)}
+  .stat{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);
+        min-height:18px}
+  .stat .pct{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--heading);
+             font-weight:600}
+  .prog{cursor:pointer}
+  .qbtn{background:transparent;border:1px solid var(--bg3);border-radius:999px;
+        color:var(--muted);font-size:11px;font-weight:600;padding:2px 9px;line-height:1.5;
+        font-variant-numeric:tabular-nums;transition:.12s}
+  .qbtn:hover{border-color:var(--heading);color:var(--heading)}
+  .qbtn.hot{color:var(--heading);border-color:var(--heading);
+            background:rgba(245,243,194,.08)}
+  .qpop{position:absolute;top:calc(100% + 6px);right:0;width:300px;z-index:40;
+        max-height:300px;overflow:auto;
+        background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:10px 11px;
+        display:none;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+  .qpop.on{display:block}
+  .qpop h4{margin:0 0 5px;font-size:11px;font-weight:600;color:var(--muted);
+           letter-spacing:.4px;font-family:inherit}
+  .qpop h4 + h4{margin-top:9px}
+  .qrow{display:flex;align-items:center;gap:6px;padding:2px 0;
+        font:11.5px/1.6 ui-monospace,Consolas,monospace;color:var(--text)}
+  .qrow .nm{color:var(--muted)}
+  .qrow .id{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .qrow button{margin-left:auto;flex:none;font-size:11px;font-weight:600;padding:1px 7px;
+               border-radius:5px;background:transparent;border:1px solid var(--bg3);
+               color:var(--muted)}
+  .qrow button:hover{border-color:var(--danger);color:var(--danger)}
+  .qempty{color:#5f6684;font-size:11.5px;padding:2px 0}
+  .qacts{display:flex;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--bg3)}
+  .qacts button{flex:1;font-size:11.5px;font-weight:600;padding:6px 0;background:var(--bg0);
+                border:1px solid var(--bg3);border-radius:6px;color:var(--text)}
+  .qacts button:hover{border-color:var(--heading);color:var(--heading)}
+
+  /* ============ 右：预览 ============ */
+  .center{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;background:var(--bg0)}
+  .canvas-bar{position:absolute;top:10px;left:16px;right:118px;z-index:6;
+              display:flex;align-items:center;gap:8px;pointer-events:none}
+  .canvas-bar > *{pointer-events:auto}
+  .canvas-bar .pill:first-child{margin-right:auto}
+  .stage{flex:1;min-width:0;min-height:0;overflow:auto;display:flex;align-items:center;
+         justify-content:center;padding:52px 26px 14px}
+  .stage.empty{color:#5c6285;font-size:13px;text-align:center;line-height:2}
+  .stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;
+             box-shadow:0 18px 40px rgba(0,0,0,.35);cursor:zoom-in;display:block}
+  .stage-row{flex:1;min-height:0;display:flex;position:relative}
+
+  /* 隐藏时把预览和缩略图都糊掉（截图防窥） */
+  body.blurred .stage img{filter:blur(26px) saturate(.65);transform:scale(1.02)}
+  body.blurred .rail-v .th img{filter:blur(8px)}
+  .blur-hint{position:absolute;left:0;right:100px;top:52px;bottom:14px;display:none;
+             align-items:center;justify-content:center;cursor:pointer;z-index:5;
+             border-radius:8px;color:#c8cee6;font-size:13px;letter-spacing:.5px;
+             background:rgba(14,15,33,.28)}
+  .blur-hint:hover{color:var(--heading)}
+  body.blurred .blur-hint{display:flex}
+
+  /* 右侧：已完成任务（竖向滚动列，只在本次会话内有效） */
+  .rail-v{width:100px;flex:none;border-left:1px solid var(--bg3);background:var(--bg1);
+          display:flex;flex-direction:column;padding:10px 8px;gap:8px;overflow:hidden}
+  .rail-v .rv-head{font-size:10.5px;font-weight:600;color:var(--muted);text-align:center;
+                   flex:none;letter-spacing:.3px}
+  .rail-v .rv-body{flex:1;min-height:0;width:100%;overflow-y:auto;overflow-x:hidden;
+                   display:flex;flex-direction:column;align-items:center;gap:8px;
+                   padding:2px 0}
+  .rv-empty{font-size:10.5px;color:#5a6080;text-align:center;line-height:1.7;padding:10px 2px}
+  .rail-v .th{position:relative;width:74px;height:74px;flex:none;border-radius:6px;
+              overflow:hidden;border:2px solid transparent;cursor:pointer;background:var(--bg0);
+              transition:.12s}
+  .rail-v .th:hover{border-color:#4a5180}
+  .rail-v .th.on{border-color:var(--heading)}
+  .rail-v .th img{width:100%;height:100%;object-fit:cover;display:block}
+  .rail-v .th .x{position:absolute;top:0;right:0;width:15px;height:15px;border:0;
+                 background:rgba(14,15,33,.78);color:#fff;font-size:11px;line-height:14px;
+                 padding:0;border-radius:0 0 0 4px}
+  .rail-v .th .x:hover{background:var(--danger);color:#1a1020}
+  .rail-v .th .ap{position:absolute;bottom:0;right:0;width:16px;height:16px;border:0;
+                  background:rgba(14,15,33,.82);color:var(--heading);font-size:11px;
+                  line-height:15px;padding:0;border-radius:4px 0 0 0}
+  .rail-v .th .ap:hover{background:var(--heading);color:var(--bg0)}
+  .rail-v .rv-clear{flex:none;width:100%;font-size:11px;font-weight:600;padding:4px 0;
+                    background:transparent;border:1px solid var(--bg3);border-radius:6px;
+                    color:var(--muted)}
+  .rail-v .rv-clear:hover{border-color:var(--danger);color:var(--danger)}
+
+  .logdock{flex:none;border-top:1px solid var(--bg3);background:var(--bg1)}
+  .logbar{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:11.5px;
+          color:var(--muted);cursor:pointer;user-select:none}
+  .logbar .last{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                font-family:ui-monospace,Consolas,monospace}
+  .logbar:hover .last{color:var(--text)}
+  #log{height:0;overflow:auto;padding:0 14px;font:11.5px/1.7 ui-monospace,Consolas,monospace;
+       border-top:1px solid transparent}
+  .logdock.open #log{height:190px;padding:8px 14px;border-top-color:var(--bg3)}
+  .l{white-space:pre-wrap;word-break:break-all}
+  .ok{color:var(--ok)} .warn{color:#f4b740} .err{color:var(--danger)}
+  .dim{color:var(--muted)} .acc{color:var(--heading)}
+  .notes{font-size:11px;color:#f4b740;line-height:1.6;margin:0 0 2px}
+
+  .dropmask{position:fixed;inset:0;z-index:60;background:rgba(14,15,33,.72);
+            display:none;place-items:center}
+  .dropmask.on{display:grid}
+  .dropcard{width:120px;height:120px;border-radius:16px;background:#1b1e38;
+            border:1px solid var(--heading);display:grid;place-items:center;
+            color:var(--heading);font-size:13px;font-weight:700;text-align:center}
+  @media(max-width:900px){
+    .page{flex-direction:column}
+    .left{width:100%;min-width:0;max-height:60vh}
+    .stage img{max-height:40vh}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 id="title">ComfyUI Studio</h1>
+    <span class="pill" id="pillWf">载入中…</span>
+    <span class="pill click" id="btnLoad" title="载入你自己的 workflow.json（必须是「导出 (API)」的格式），也可以直接把文件拖进窗口">载入工作流 (API)</span>
+    <span class="pill click" id="btnBuiltin" title="回到内置的 Moss 工作流">恢复内置</span>
+    <input type="file" id="file" accept=".json,application/json" style="display:none">
+    <span class="grow"></span>
+    <span class="pill dim" id="pillOrigin">-</span>
+    <span class="pill click" id="pillBase" title="点击修改 ComfyUI 地址">-</span>
+  </header>
+
+  <div class="page">
+    <section class="left">
+      <div class="left-scroll" id="leftScroll"></div>
+      <div class="dock">
+        <div class="gen-row">
+          <button class="generate" id="btnGen">
+            <span id="genLabel">生 成</span>
+          </button>
+          <button class="iconbtn" id="btnRefresh" title="重新读取服务端的模型 / 采样器列表">⟳</button>
+        </div>
+        <div class="prog" id="progTrack" title="点击查看任务队列"><i id="bar"></i></div>
+        <div class="stat">
+          <span id="progText">空闲</span>
+          <span class="pct" id="progPct"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="center" id="center">
+      <div class="canvas-bar">
+        <span class="pill dim" id="pillArch">—</span>
+        <button class="qbtn" id="queueBtn" title="查看任务队列">队列 —</button>
+        <button class="qbtn" id="btnBlur" title="隐藏预览和缩略图（截图防窥）">隐藏图片</button>
+        <span class="pill dim" id="pillCount">尚无图片</span>
+        <div class="qpop" id="queuePop"></div>
+      </div>
+      <div class="stage-row">
+        <div class="stage empty" id="pv">
+          <div>生成后图片显示在这里<br>
+            <span style="color:#4a5070">也可以把 workflow.json 拖进窗口载入</span></div>
+        </div>
+        <div class="blur-hint" id="blurHint">已隐藏 · 点这里显示</div>
+        <aside class="rail-v" id="gallery">
+          <div class="rv-head" id="galCount">已完成 0</div>
+          <div class="rv-body" id="galRail"></div>
+          <button class="rv-clear" id="galClear" style="display:none">清空</button>
+        </aside>
+      </div>
+      <div class="logdock" id="logdock">
+        <div class="logbar" id="logbar">
+          <span>日志</span><span class="last" id="logLast">就绪</span><span id="logArw">▴</span>
+        </div>
+        <div id="log"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<div class="dropmask" id="dropmask"><div class="dropcard">松开<br>载入工作流</div></div>
+
+<script>
+"use strict";
+/* ==== 纯逻辑开始（tools/web_logic_probe.js 会把这一段抠出去在 Node 里跑）==== */
+
+const SAMPLER_CLASSES = ["KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"];
+const SAMPLER_LABELS = {
+  steps:["步数",1,150,1], cfg:["CFG",0,30,0.1], denoise:["降噪强度",0,1,0.01],
+  sampler_name:["采样器",null,null,null], scheduler:["调度器",null,null,null],
+  seed:["种子",-1,4294967295,1], noise_seed:["噪声种子",-1,4294967295,1],
+  start_at_step:["起始步",0,10000,1], end_at_step:["结束步",0,10000,1],
+  add_noise:["加噪",null,null,null], return_with_leftover_noise:["保留剩余噪声",null,null,null]
+};
+const MODEL_LABELS = {
+  unet_name:"UNET 模型", ckpt_name:"Checkpoint", clip_name:"文本编码器",
+  clip_name1:"文本编码器 1", clip_name2:"文本编码器 2", clip_name3:"文本编码器 3",
+  vae_name:"VAE", lora_name:"LoRA"
+};
+const MODEL_ORDER = ["unet_name","ckpt_name","clip_name","clip_name1","clip_name2",
+                     "clip_name3","type","vae_name","lora_name"];
+const SAMPLER_KINDS = {cfg:"float", denoise:"float", steps:"int", seed:"int",
+                       noise_seed:"int", start_at_step:"int", end_at_step:"int"};
+const PROMPT_FIELD_CANDIDATES = ["text","positive","prompt","text_g","text_l","string"];
+const PROMPT_CLASS_HINTS = ["cliptextencode","easyp","positive","promptui","prompt",
+                            "textencode","wildcard","string"];
+const NEVER_PROMPT_FIELDS = ["temp_str","orinalMessage","random_template","filename_prefix",
+                             "打开提示词编辑器","placeholder"];
+const SIZE_PRESETS = ["1024x1536","1536x1024","1024x1024","832x1216","768x1024","512x512"];
+
+function linkTarget(v){
+  return (Array.isArray(v) && v.length === 2 && (typeof v[0] === 'string' || typeof v[0] === 'number'))
+    ? String(v[0]) : null;
+}
+function isLoraLoader(node){
+  const ct = String(node.class_type || '').toLowerCase();
+  const ins = node.inputs || {};
+  if ('loras' in ins) return true;
+  return ct.indexOf('lora') >= 0 && ct.indexOf('withoutlora') < 0;
+}
+function isLoraTagOnly(s){
+  const t = String(s).trim();
+  if (!t) return false;
+  return t.split(/\s+/).every(x => /^<lora:[^>]+>$/.test(x));
+}
+function kindOf(v){
+  if (typeof v === 'boolean') return 'bool';
+  if (Number.isInteger(v)) return 'int';
+  if (typeof v === 'number') return 'float';
+  return 'string';
+}
+
+function upstreamText(wf, sampler, which, used){
+  const start = linkTarget((sampler.inputs || {})[which]);
+  if (!start) return null;
+  const seen = [], candidates = [], queue = [[start, 0]];
+  while (queue.length && seen.length < 80){
+    const item = queue.shift();
+    const nid = item[0], depth = item[1];
+    if (!nid || seen.indexOf(nid) >= 0 || depth > 6) continue;
+    seen.push(nid);
+    const node = wf[nid];
+    if (!node) continue;
+    if (isLoraLoader(node)) continue;
+    const ins = node.inputs || {};
+    const title = String((node._meta || {}).title || '');
+    const ct = String(node.class_type || '').toLowerCase();
+    for (const fname of PROMPT_FIELD_CANDIDATES){
+      const v = ins[fname];
+      if (typeof v !== 'string') continue;
+      if (NEVER_PROMPT_FIELDS.indexOf(fname) >= 0) continue;
+      if (isLoraTagOnly(v)) continue;
+      if (used['k:' + nid + '.' + fname]) continue;
+      let score = 0;
+      if (fname === 'text' || fname === 'positive' || fname === 'prompt') score += 6;
+      if (PROMPT_CLASS_HINTS.some(h => ct.indexOf(h) >= 0)) score += 6;
+      if (['提示词','正面','负面','prompt','Prompt'].some(h => title.indexOf(h) >= 0)) score += 4;
+      if (v.trim()) score += 3;
+      score += Math.max(0, 3 - depth);
+      candidates.push({score:score, depth:depth, node:nid, input:fname, value:v, title:title, cls:node.class_type});
+    }
+    for (const k in ins){
+      const nxt = linkTarget(ins[k]);
+      if (nxt) queue.push([nxt, depth + 1]);
+    }
+  }
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.score - a.score || a.depth - b.depth);
+  return candidates[0];
+}
+
+function resolveScalar(wf, nodeId, inputName){
+  const node = wf[String(nodeId)];
+  if (!node) return null;
+  const v = (node.inputs || {})[inputName];
+  const up = linkTarget(v);
+  if (up){
+    const un = wf[up];
+    if (!un) return null;
+    for (const fname in (un.inputs || {})){
+      const fv = un.inputs[fname];
+      if (typeof fv === 'boolean') continue;
+      if (typeof fv === 'number') return {node:up, input:fname, value:fv,
+        cls:un.class_type, title:(un._meta||{}).title || ''};
+      if (typeof fv === 'string' && /^-?\d+$/.test(fv.trim()))
+        return {node:up, input:fname, value:fv, cls:un.class_type, title:(un._meta||{}).title || ''};
+    }
+    return null;
+  }
+  if (typeof v === 'number' || (typeof v === 'string' && /^-?\d+$/.test(v.trim())))
+    return {node:String(nodeId), input:inputName, value:v, cls:node.class_type,
+            title:(node._meta||{}).title || ''};
+  return null;
+}
+
+function humanize(name){
+  const m = {filename_prefix:'输出文件名前缀', batch_size:'批量张数',
+             weight_dtype:'权重精度', type:'编码器类型'};
+  return m[name] || name;
+}
+
+/* 从任意工作流推导可调参数 */
+function scanWorkflow(wf){
+  const groups = [], warnings = [], used = {};
+
+  const mk = (key, label, node, input, kind, extra) =>
+    Object.assign({key:key, label:label, node:String(node), input:input, kind:kind,
+                   targets:[{node:String(node), input:input}]}, extra || {});
+
+  const nids = Object.keys(wf);
+  const samplers = nids.filter(id => SAMPLER_CLASSES.indexOf(wf[id].class_type) >= 0)
+    .sort((a,b) => a.length - b.length || (a < b ? -1 : 1));
+
+  /* 1. 提示词 */
+  const promptFields = [];
+  if (samplers.length){
+    const pos = upstreamText(wf, wf[samplers[0]], 'positive', used);
+    if (pos){
+      used['k:' + pos.node + '.' + pos.input] = 1;
+      promptFields.push(mk(pos.node + '.' + pos.input, '正向提示词', pos.node, pos.input,
+                           'text', {rows:4, multiline:true, value:pos.value}));
+    } else warnings.push('没找到正向提示词（positive 上游没有可编辑的字符串节点）');
+    const neg = upstreamText(wf, wf[samplers[0]], 'negative', used);
+    if (neg){
+      used['k:' + neg.node + '.' + neg.input] = 1;
+      promptFields.push(mk(neg.node + '.' + neg.input, '负向提示词', neg.node, neg.input,
+                           'text', {rows:3, multiline:true, value:neg.value}));
+    } else warnings.push('没找到负向提示词');
+  } else warnings.push('工作流里没有 KSampler，提示词与采样参数推导跳过');
+  if (promptFields.length) groups.push({id:'prompt', title:'提示词', fields:promptFields});
+
+  /* 2. 模型 */
+  const modelFields = [];
+  nids.slice().sort().forEach(nid => {
+    const node = wf[nid], ins = node.inputs || {}, ct = node.class_type || '';
+    for (const fname in MODEL_LABELS){
+      const v = ins[fname];
+      if (typeof v !== 'string' || !v) continue;
+      if (fname === 'lora_name' && isLoraLoader(node)) continue;
+      modelFields.push(mk(nid + '.' + fname, MODEL_LABELS[fname] + ' · ' + ct, nid, fname,
+                          'string', {enum:true, enumClass:ct, enumField:fname, value:v, classType:ct}));
+    }
+    if (['CLIPLoader','DualCLIPLoader','TripleCLIPLoader'].indexOf(ct) >= 0 &&
+        typeof ins.type === 'string'){
+      modelFields.push(mk(nid + '.type', '编码器类型 · ' + ct, nid, 'type', 'string',
+                          {enum:true, enumClass:ct, enumField:'type', value:ins.type, classType:ct}));
+    }
+  });
+  modelFields.sort((a,b) => {
+    const ia = MODEL_ORDER.indexOf(a.input), ib = MODEL_ORDER.indexOf(b.input);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  if (modelFields.length) groups.push({id:'model', title:'模型', fields:modelFields});
+
+  /* 3. LoRA */
+  const loraFields = [];
+  nids.slice().sort().forEach(nid => {
+    const node = wf[nid], ins = node.inputs || {}, ct = node.class_type || '';
+    if ('loras' in ins){
+      const targets = [{node:String(nid), input:'loras', adapter:'loras_widget'}];
+      if ('text' in ins) targets.push({node:String(nid), input:'text', adapter:'lora_text'});
+      loraFields.push({key:nid + '.loras', label:'LoRA · ' + ct, node:String(nid),
+                       input:'loras', kind:'loras', value:ins.loras, classType:ct,
+                       enum:true, enumClass:'LoraLoader', enumField:'lora_name', targets:targets});
+    } else if ((ct === 'LoraLoader' || ct === 'LoraLoaderModelOnly') &&
+               typeof ins.lora_name === 'string'){
+      loraFields.push(mk(nid + '.lora_name', 'LoRA · ' + ct, nid, 'lora_name', 'string',
+                         {enum:true, enumClass:'LoraLoader', enumField:'lora_name',
+                          value:ins.lora_name, classType:ct}));
+      if (typeof ins.strength_model === 'number'){
+        loraFields.push(mk(nid + '.strength_model', 'LoRA 权重', nid, 'strength_model', 'float',
+                           {min:-2, max:2, step:0.05, value:ins.strength_model, classType:ct}));
+      }
+    }
+  });
+  if (loraFields.length) groups.push({id:'lora', title:'LoRA', fields:loraFields});
+
+  /* 4. 每个采样器一组 */
+  samplers.forEach(nid => {
+    const node = wf[nid], ins = node.inputs || {};
+    const t = (node._meta || {}).title || node.class_type;
+    const fields = [];
+    for (const fname in SAMPLER_LABELS){
+      const lab = SAMPLER_LABELS[fname];
+      const raw = ins[fname];
+      if (raw === undefined || raw === null) continue;
+      if (fname.indexOf('seed') >= 0){
+        const src = resolveScalar(wf, nid, fname);
+        if (!src) continue;
+        const key = src.node + '.' + src.input;
+        if (used['k:' + key] || fields.some(f => f.key === key)) continue;
+        used['k:' + key] = 1;
+        fields.push(mk(key, lab[0], src.node, src.input, 'int',
+                       {min:lab[1], max:lab[2], step:lab[3], random_if_negative:true,
+                        value:src.value, classType:src.cls}));
+        continue;
+      }
+      if (fname === 'sampler_name' || fname === 'scheduler'){
+        fields.push(mk(nid + '.' + fname, lab[0], nid, fname, 'string',
+                       {enum:true, enumClass:node.class_type, enumField:fname,
+                        value:raw, classType:node.class_type}));
+        continue;
+      }
+      if (fname === 'add_noise' || fname === 'return_with_leftover_noise'){
+        fields.push(mk(nid + '.' + fname, lab[0], nid, fname, 'bool',
+                       {value:raw, classType:node.class_type}));
+        continue;
+      }
+      const kind = SAMPLER_KINDS[fname] || kindOf(raw);
+      if (kind === 'int' || kind === 'float'){
+        fields.push(mk(nid + '.' + fname, lab[0], nid, fname, kind,
+                       {min:lab[1], max:lab[2], step:lab[3], value:raw, classType:node.class_type}));
+      }
+    }
+    for (const fname in ins){
+      const raw = ins[fname];
+      if (SAMPLER_LABELS[fname] || linkTarget(raw)) continue;
+      if (typeof raw === 'boolean') continue;
+      const kind = SAMPLER_KINDS[fname] || kindOf(raw);
+      if (['int','float','string'].indexOf(kind) < 0) continue;
+      if (fields.some(f => f.input === fname)) continue;
+      fields.push(mk(nid + '.' + fname, humanize(fname), nid, fname, kind,
+                     {enum:true, enumClass:node.class_type, enumField:fname,
+                      value:raw, classType:node.class_type}));
+    }
+    groups.push({id:'sampler_' + nid, title:t + ' · #' + nid, fields:fields});
+  });
+
+  /* 5. 尺寸 / 批量 */
+  const sizeFields = [];
+  nids.slice().sort().forEach(nid => {
+    const node = wf[nid], ins = node.inputs || {}, ct = node.class_type || '';
+    if (!(ct.indexOf('Latent') >= 0 && 'width' in ins && 'height' in ins)) return;
+    const wl = linkTarget(ins.width), hl = linkTarget(ins.height);
+    if (wl && wl === hl){
+      const up = wf[wl] || {};
+      const rj = (up.inputs || {}).resolution_json;
+      if (typeof rj === 'string'){
+        sizeFields.push({key:wl + '.resolution_json', label:'分辨率', node:wl,
+                         input:'resolution_json', kind:'size', value:rj,
+                         classType:up.class_type, presets:SIZE_PRESETS,
+                         targets:[{node:wl, input:'resolution_json', adapter:'resolution_json'}]});
+      } else warnings.push('latent 的宽高连到 ' + up.class_type + '，但找不到 resolution_json');
+    } else if (Number.isInteger(ins.width) && Number.isInteger(ins.height)){
+      sizeFields.push(mk(nid + '.width', '宽度', nid, 'width', 'int',
+                         {min:64, max:4096, step:64, value:ins.width, classType:ct}));
+      sizeFields.push(mk(nid + '.height', '高度', nid, 'height', 'int',
+                         {min:64, max:4096, step:64, value:ins.height, classType:ct}));
+    }
+    if (Number.isInteger(ins.batch_size) && !sizeFields.some(f => f.input === 'batch_size')){
+      sizeFields.push(mk(nid + '.batch_size', '批量张数', nid, 'batch_size', 'int',
+                         {min:1, max:16, step:1, value:ins.batch_size, classType:ct}));
+    }
+  });
+  if (sizeFields.length) groups.push({id:'size', title:'尺寸与批量', fields:sizeFields});
+
+  /* 6. 输出 */
+  const outFields = [];
+  nids.slice().sort().forEach(nid => {
+    const ct = wf[nid].class_type;
+    if (['SaveImage','Image Save','SaveImageWebsocket'].indexOf(ct) < 0) return;
+    const v = (wf[nid].inputs || {}).filename_prefix;
+    if (typeof v === 'string'){
+      outFields.push(mk(nid + '.filename_prefix', '输出文件名前缀', nid, 'filename_prefix',
+                        'string', {value:v, classType:ct}));
+    }
+  });
+  if (outFields.length) groups.push({id:'output', title:'输出', fields:outFields});
+
+  return {title:'workflow', nodeCount:Object.keys(wf).length, groups:groups,
+          warnings:warnings, stats:{
+            samplers: samplers.length,
+            fields: groups.reduce((n, g) => n + g.fields.length, 0),
+            loras: loraFields.filter(f => f.kind === 'loras').length
+          }};
+}
+
+/* ---------- 适配器 ---------- */
+const ADAPTERS = {
+  plain: v => v,
+  int: v => (typeof v === 'number' ? Math.trunc(v) : parseInt(String(v).trim(), 10)),
+  float: v => parseFloat(v),
+  bool: v => (typeof v === 'boolean' ? v : ['1','true','yes','on'].indexOf(String(v).trim().toLowerCase()) >= 0),
+
+  resolution_json: (value, current) => {
+    let base = {version: 1};
+    if (typeof current === 'string'){
+      try { const p = JSON.parse(current); if (p && typeof p === 'object') base = p; } catch (e) {}
+    }
+    if (value && typeof value === 'object'){ Object.assign(base, value); }
+    else {
+      const m = String(value).trim().match(/^(\d+)\s*[xX*×]\s*(\d+)$/);
+      if (!m) throw new Error('分辨率格式应为 宽x高：' + value);
+      base.width = parseInt(m[1], 10); base.height = parseInt(m[2], 10);
+    }
+    return JSON.stringify(base);
+  },
+
+  loras_widget: value => ({__value__: asLoraList(value).map(x => ({
+    name: x.name, strength: x.strength.toFixed(2), active: !!x.active, expanded: false,
+    clipStrength: (x.clip_strength === undefined ? x.strength : x.clip_strength).toFixed(2),
+    locked: false
+  }))}),
+
+  lora_text: value => asLoraList(value).filter(x => x.active)
+    .map(x => '<lora:' + x.name + ':' + x.strength.toFixed(2) + '>').join(' ')
+};
+
+function randomSeed(){ return Math.floor(Math.random() * 4294967296); }
+
+function asLoraList(value){
+  if (value && typeof value === 'object' && !Array.isArray(value) && value.__value__) value = value.__value__;
+  if (typeof value === 'string'){
+    const out = [], re = /<lora:([^:>]+):([0-9]*\.?[0-9]+)(?::([0-9]*\.?[0-9]+))?>/g;
+    let m;
+    while ((m = re.exec(value)) !== null){
+      const s = parseFloat(m[2]);
+      out.push({name:m[1], strength:s, clip_strength:m[3] ? parseFloat(m[3]) : s, active:true});
+    }
+    return out;
+  }
+  if (!Array.isArray(value)) throw new Error('LoRA 列表格式不支持');
+  return value.map(it => {
+    if (!it || !it.name) throw new Error('LoRA 条目缺少 name');
+    const s = parseFloat(it.strength === undefined ? 1 : it.strength);
+    return {name:String(it.name), strength:isNaN(s) ? 1 : s,
+            clip_strength:it.clipStrength !== undefined ? parseFloat(it.clipStrength) : (isNaN(s) ? 1 : s),
+            active:it.active === undefined ? true : !!it.active};
+  });
+}
+
+function flattenFields(spec){
+  const out = [];
+  for (const g of (spec.groups || [])) for (const f of (g.fields || [])) out.push(f);
+  return out;
+}
+
+function nodeInput(workflow, nodeId, input){
+  const n = workflow[String(nodeId)];
+  return n && n.inputs ? n.inputs[input] : undefined;
+}
+
+function readParams(workflow, spec){
+  const out = {};
+  for (const f of flattenFields(spec)){
+    const t = (f.targets || [])[0];
+    if (!t){ out[f.key] = f.value; continue; }
+    const raw = nodeInput(workflow, t.node, t.input);
+    let v = raw;
+    if (t.adapter === 'resolution_json'){
+      let d = {};
+      try { d = typeof raw === 'string' ? JSON.parse(raw) : (raw || {}); } catch (e) { d = {}; }
+      v = (parseInt(d.width, 10) || 0) + 'x' + (parseInt(d.height, 10) || 0);
+    } else if (t.adapter === 'loras_widget' || t.adapter === 'lora_text'){
+      const src = t.adapter === 'lora_text' ? nodeInput(workflow, t.node, 'loras') : raw;
+      try { v = asLoraList(src).map(x => ({name:x.name, strength:x.strength, active:x.active})); }
+      catch (e) { v = []; }
+    } else if (f.kind === 'int' && typeof v === 'number'){ v = Math.trunc(v); }
+    if (v === undefined && f.value !== undefined) v = f.value;
+    out[f.key] = v;
+  }
+  return out;
+}
+
+function applyParams(workflow, spec, values){
+  values = values || {};
+  const wf = JSON.parse(JSON.stringify(workflow));
+  const fields = flattenFields(spec);
+  const known = fields.map(f => f.key);
+  const unknown = Object.keys(values).filter(k => known.indexOf(k) < 0);
+  if (unknown.length) throw new Error('没有这些参数：' + unknown.join(', '));
+
+  const base = readParams(workflow, spec);
+  const changes = [], resolved = {};
+  for (const f of fields){
+    let value = (f.key in values) ? values[f.key] : base[f.key];
+    if (value === undefined) value = f.value;
+    if (f.random_if_negative){
+      const num = (typeof value === 'number') ? value : parseFloat(value);
+      if (!isNaN(num) && num < 0) value = randomSeed();
+      else if (typeof value === 'string' && value.trim() === '') value = randomSeed();
+    }
+    for (const t of (f.targets || [])){
+      const node = wf[String(t.node)];
+      if (!node) throw new Error('参数 ' + f.key + ' 指向的节点 ' + t.node + ' 不存在');
+      node.inputs = node.inputs || {};
+      const before = node.inputs[t.input];
+      let after;
+      if (t.adapter){
+        const fn = ADAPTERS[t.adapter];
+        if (!fn) throw new Error('未知适配器 ' + t.adapter);
+        after = fn(value, before);
+      } else {
+        after = (ADAPTERS[f.kind] || ADAPTERS.plain)(value, before);
+      }
+      node.inputs[t.input] = after;
+      changes.push({key:f.key, label:f.label, node:String(t.node), cls:node.class_type,
+                    input:t.input, adapter:t.adapter || f.kind || 'plain',
+                    before:before, after:after});
+    }
+    resolved[f.key] = value;
+  }
+  return {wf:wf, changes:changes, resolved:resolved};
+}
+/* ==== 纯逻辑结束 ==== */
+
+/* ===================== DOM ===================== */
+const $ = id => document.getElementById(id);
+const BUILTIN = {name:'内置 Moss', url:'../workflow/moss.json'};
+let WF = null, SPEC = null, WFNAME = '', OPTIONS = {}, ws = null;
+const clientId = 'ui-' + Math.random().toString(16).slice(2);
+
+const logEl = $('log');
+function log(msg, cls){
+  const d = document.createElement('div');
+  d.className = 'l ' + (cls || '');
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+  $('logLast').textContent = msg;
+}
+$('logbar').onclick = () => {
+  const dock = $('logdock');
+  dock.classList.toggle('open');
+  $('logArw').textContent = dock.classList.contains('open') ? '▾' : '▴';
+};
+
+function baseUrl(){ return (localStorage.getItem('cgu.base') || 'http://127.0.0.1:8188').replace(/\/+$/, ''); }
+function setBase(v){
+  v = String(v).replace(/\/+$/, '');
+  localStorage.setItem('cgu.base', v);
+  $('pillBase').textContent = v.replace(/^https?:\/\//, '') || '-';
+}
+async function call(path, opt){
+  try {
+    const r = await fetch(baseUrl() + path, Object.assign({mode:'cors'}, opt || {}));
+    return {ok:true, status:r.status, resp:r};
+  } catch (e) { return {ok:false, err:String(e.message)}; }
+}
+function explain(e){
+  return String(e).indexOf('Failed to fetch') >= 0
+    ? 'CORS 被拦或服务没起（浏览器只会说 Failed to fetch）' : e;
+}
+/* 进度条：比例 + 文字 + 百分比，一次调用全更新 */
+function setProg(ratio, text, pctText){
+  const r = Math.max(0, Math.min(1, ratio == null ? 0 : ratio));
+  $('bar').style.width = (r * 100).toFixed(1) + '%';
+  if (text !== undefined && text !== null) $('progText').textContent = text;
+  $('progPct').textContent = pctText !== undefined ? pctText
+    : (r > 0 ? Math.round(r * 100) + '%' : '');
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* ---------------- 任务队列 ---------------- */
+let qTimer = null;
+function queueItemId(it){
+  if (Array.isArray(it)) return String(it[1]);
+  if (it && typeof it === 'object') return String(it.prompt_id || it.id || '?');
+  return '?';
+}
+function setQueueBadge(n){
+  const btn = $('queueBtn');
+  btn.textContent = '队列 ' + (n == null ? '—' : n);
+  btn.classList.toggle('hot', n > 0);
+}
+async function refreshQueue(){
+  const r = await call('/queue');
+  if (!r.ok || r.status !== 200){ setQueueBadge(null); return; }
+  let j;
+  try { j = await r.resp.json(); } catch (e) { setQueueBadge(null); return; }
+  const run = j.queue_running || [], pend = j.queue_pending || [];
+  setQueueBadge(run.length + pend.length);
+  if ($('queuePop').classList.contains('on')) renderQueuePop(run, pend);
+}
+function renderQueuePop(run, pend){
+  const pop = $('queuePop');
+  let html = '<h4>运行中 ' + run.length + '</h4>';
+  if (!run.length) html += '<div class="qempty">空闲</div>';
+  for (const it of run){
+    html += '<div class="qrow"><span class="nm">#</span><span class="id">' +
+            esc(queueItemId(it)) + '</span>' +
+            '<button data-act="interrupt">中断</button></div>';
+  }
+  html += '<h4>排队 ' + pend.length + '</h4>';
+  if (!pend.length) html += '<div class="qempty">空</div>';
+  for (const it of pend){
+    const id = queueItemId(it);
+    html += '<div class="qrow"><span class="nm">#</span><span class="id">' + esc(id) +
+            '</span><button data-act="del" data-id="' + esc(id) + '">删除</button></div>';
+  }
+  html += '<div class="qacts"><button data-act="refresh">刷新</button>' +
+          '<button data-act="clear">清空队列</button></div>';
+  pop.innerHTML = html;
+  pop.querySelectorAll('button[data-act]').forEach(b => {
+    b.onclick = ev => { ev.stopPropagation(); queueAction(b.dataset.act, b.dataset.id); };
+  });
+}
+async function queueAction(act, id){
+  if (act === 'refresh'){ refreshQueue(); return; }
+  if (act === 'interrupt'){
+    log('中断当前任务…', 'warn');
+    await call('/interrupt', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+  } else if (act === 'clear'){
+    log('清空队列…', 'warn');
+    await call('/queue', {method:'POST', headers:{'Content-Type':'application/json'},
+                          body: JSON.stringify({clear:true})});
+  } else if (act === 'del'){
+    await call('/queue', {method:'POST', headers:{'Content-Type':'application/json'},
+                          body: JSON.stringify({delete:[id]})});
+  }
+  setTimeout(refreshQueue, 400);
+}
+function toggleQueue(force){
+  const pop = $('queuePop');
+  const on = force === undefined ? !pop.classList.contains('on') : force;
+  pop.classList.toggle('on', on);
+  if (on){
+    refreshQueue();
+    if (!qTimer) qTimer = setInterval(refreshQueue, 2000);
+  } else if (qTimer){
+    clearInterval(qTimer); qTimer = null;
+  }
+}
+$('queueBtn').onclick = ev => { ev.stopPropagation(); toggleQueue(); };
+$('progTrack').onclick = () => toggleQueue();
+document.addEventListener('click', ev => {
+  const pop = $('queuePop');
+  if (!pop.classList.contains('on')) return;
+  if (pop.contains(ev.target) || ev.target === $('queueBtn')) return;
+  toggleQueue(false);
+});
+
+/* ---------------- 已完成任务（右侧竖列） ----------------
+   刷新页面不丢：只把「文件名 + prompt_id」存进 sessionStorage，
+   图片 blob 重新从 /view 拉；关掉标签页 sessionStorage 自动清空。 */
+const done = [];
+let activeIdx = -1;
+const DONE_KEY = 'cgu.done.v1';
+const EMPTY_STAGE =
+  '<div>生成后图片显示在这里<br>' +
+  '<span style="color:#4a5070">也可以把 workflow.json 拖进窗口载入</span></div>';
+
+function persistDone(){
+  try {
+    const refs = done.map(it => ({
+      filename: it.filename, subfolder: it.subfolder || '', type: it.type || 'output',
+      size: it.size || 0, pid: it.pid || null
+    }));
+    sessionStorage.setItem(DONE_KEY, JSON.stringify(refs.slice(-60)));
+  } catch (e) { /* 隐私模式 / 配额满：静默降级，不影响出图 */ }
+}
+
+async function fetchImage(im, quiet){
+  const q = new URLSearchParams({filename:im.filename, subfolder:im.subfolder || '',
+                                 type:im.type || 'output'});
+  const r = await call('/view?' + q.toString());
+  if (!r.ok || r.status !== 200){
+    if (!quiet) log('取图失败 ' + im.filename, 'err');
+    return null;
+  }
+  const blob = await r.resp.blob();
+  return {filename:im.filename, subfolder:im.subfolder || '', type:im.type || 'output',
+          url:URL.createObjectURL(blob), size:blob.size};
+}
+
+/* 刷新后把上次会话的列表接回来 */
+async function restoreDone(){
+  let refs = [];
+  try { refs = JSON.parse(sessionStorage.getItem(DONE_KEY) || '[]') || []; } catch (e) { refs = []; }
+  if (!Array.isArray(refs) || !refs.length){ renderGallery(); return 0; }
+  let n = 0, lost = 0;
+  for (const r of refs){
+    if (!r || !r.filename) continue;
+    // 同参数连点可能产生同名文件，所以用「文件名 + prompt_id」去重
+    if (done.some(d => d.filename === r.filename && (d.pid || null) === (r.pid || null))) continue;
+    const item = await fetchImage({filename: r.filename, subfolder: r.subfolder,
+                                   type: r.type}, true);
+    if (!item){ lost++; continue; }
+    item.pid = r.pid || null;
+    if (!item.size && r.size) item.size = r.size;
+    item.workflow = null;                 // 懒加载：点 ↻ 时再去 /history 取
+    done.push(item);
+    n++;
+  }
+  if (n){
+    activeIdx = done.length - 1;
+    renderGallery();
+    selectDone(activeIdx);
+    log('已恢复本次会话的 ' + n + ' 张图（刷新不丢，关掉标签页才清）', 'ok');
+  }
+  if (lost){
+    log('有 ' + lost + ' 张图的文件已经不在 ComfyUI 的 output 里了，跳过', 'warn');
+    renderGallery();
+  }
+  return n;
+}
+function showInStage(url, name){
+  const pv = $('pv');
+  pv.innerHTML = '';
+  pv.className = 'stage';
+  const el = document.createElement('img');
+  el.src = url;
+  el.title = name + '（点击新窗口打开）';
+  el.onclick = () => window.open(url, '_blank');
+  pv.appendChild(el);
+}
+function resetStage(){
+  const pv = $('pv');
+  pv.innerHTML = EMPTY_STAGE;
+  pv.className = 'stage empty';
+}
+function renderGallery(){
+  const rail = $('galRail');
+  $('galCount').textContent = '已完成 ' + done.length;
+  $('galClear').style.display = done.length ? '' : 'none';
+  rail.innerHTML = '';
+  if (!done.length){
+    const e = document.createElement('div');
+    e.className = 'rv-empty';
+    e.textContent = '生成后图片出现在这里';
+    rail.appendChild(e);
+    return;                       // 注意：渲染函数不写 sessionStorage，
+  }                               // 否则启动时空列表会把存档冲掉
+  done.forEach((it, i) => {
+    const th = document.createElement('div');
+    th.className = 'th' + (i === activeIdx ? ' on' : '');
+    th.title = it.filename + '  ' + ((it.size || 0) / 1024).toFixed(0) + 'KB';
+    const img = document.createElement('img');
+    img.src = it.url;
+    th.appendChild(img);
+    const x = document.createElement('button');
+    x.className = 'x'; x.textContent = '×'; x.title = '从列表移除';
+    x.onclick = ev => { ev.stopPropagation(); removeDone(i); };
+    th.appendChild(x);
+    if (it.workflow || it.pid){
+      const ap = document.createElement('button');
+      ap.className = 'ap'; ap.textContent = '↻';
+      ap.title = '套用这张的参数（会把当前工作流换成它，点生成即可重跑）';
+      ap.onclick = ev => { ev.stopPropagation(); applyFromHistory(it); };
+      th.appendChild(ap);
+    }
+    th.onclick = () => selectDone(i);
+    rail.appendChild(th);
+  });
+  rail.scrollTop = rail.scrollHeight;
+}
+function selectDone(i){
+  const it = done[i];
+  if (!it) return;
+  activeIdx = i;
+  showInStage(it.url, it.filename);
+  renderGallery();
+}
+function removeDone(i){
+  const it = done[i];
+  if (!it) return;
+  try { URL.revokeObjectURL(it.url); } catch (e) {}
+  done.splice(i, 1);
+  if (activeIdx === i){ activeIdx = -1; resetStage(); }
+  else if (activeIdx > i) activeIdx--;
+  renderGallery();
+  persistDone();
+}
+$('galClear').onclick = () => {
+  done.forEach(it => { try { URL.revokeObjectURL(it.url); } catch (e) {} });
+  done.length = 0;
+  activeIdx = -1;
+  resetStage();
+  renderGallery();
+  persistDone();                   // 存档同步清空，刷新后不会又冒出来
+  log('已清空完成列表', 'dim');
+};
+
+/* 套用缩略图的工作流参数（工作流按需从 /history 取，不占存储） */
+async function applyFromHistory(it){
+  if (!it) return;
+  let wf = it.workflow;
+  if (!wf && it.pid){
+    const r = await call('/history/' + it.pid);
+    if (r.ok && r.status === 200){
+      const j = await r.resp.json();
+      const e = j[it.pid];
+      wf = (e && e.prompt && e.prompt[2]) || null;
+    }
+  }
+  if (!wf){
+    log('这张图的工作流已经取不到了（ComfyUI 历史被清空或重启过），跳过', 'warn');
+    return;
+  }
+  it.workflow = wf;
+  log('套用这张图的参数：' + it.filename, 'acc');
+  await useWorkflow(wf, '套用 ' + String(it.pid || '').slice(0, 8));
+  log('当前工作流已换成该次的图；参数按那次生成还原，点「生成」即可重跑', 'ok');
+}
+
+/* 注意：完成列表只在内存里，不做持久化 —— 关掉网页就没了，下次进来是空的。
+   （生成过的图仍然能在 ComfyUI 自己的 output 目录里找到。） */
+
+/* ---- 服务端选项 ---- */
+async function loadOption(enumClass, enumField){
+  const k = enumClass + '.' + enumField;
+  if (OPTIONS[k] !== undefined) return OPTIONS[k];
+  OPTIONS[k] = null;
+  const r = await call('/object_info/' + encodeURIComponent(enumClass));
+  if (!r.ok || r.status !== 200) return null;
+  const j = await r.resp.json();
+  const node = j[enumClass];
+  if (!node) return null;
+  const req = (node.input && node.input.required) || {};
+  const opt = (node.input && node.input.optional) || {};
+  const s2 = req[enumField] || opt[enumField];
+  const first = s2 && s2[0];
+  const list = Array.isArray(first) ? first.map(String) : null;
+  OPTIONS[k] = list;
+  return list;
+}
+async function prefetchOptions(){
+  const need = {};
+  for (const f of flattenFields(SPEC)){
+    if (f.enum && f.enumClass && f.enumField) need[f.enumClass + '|' + f.enumField] = 1;
+  }
+  need['LoraLoader|lora_name'] = 1;
+  for (const k of Object.keys(need)){
+    const p = k.split('|');
+    await loadOption(p[0], p[1]);
+  }
+}
+
+/* ---- 渲染左侧 ---- */
+function alabel(text){
+  const d = document.createElement('label');
+  d.textContent = text;
+  return d;
+}
+function fieldWrap(f){
+  const w = document.createElement('div');
+  w.className = 'f';
+  w.appendChild(alabel(f.label || f.key));
+  w.appendChild(buildInput(f));
+  if (f.hint){
+    const h = document.createElement('div');
+    h.className = 'hint'; h.textContent = f.hint;
+    w.appendChild(h);
+  }
+  return w;
+}
+
+function buildInput(f){
+  if (f.kind === 'size'){
+    const box = document.createElement('div');
+    const m = String(f.value || '1024x1024').match(/(\d+)x(\d+)/) || [0, 1024, 1024];
+    box.innerHTML =
+      '<div class="sz-row">' +
+        '<input type="number" step="64" min="64" data-size="w" value="' + m[1] + '">' +
+        '<span class="sz-x">×</span>' +
+        '<input type="number" step="64" min="64" data-size="h" value="' + m[2] + '">' +
+      '</div>' +
+      '<select data-size="p" class="sz-preset"><option value="">选择预设尺寸…</option>' +
+        (f.presets || SIZE_PRESETS).map(p =>
+          '<option value="' + p + '">' + p.replace('x', ' × ') + '</option>').join('') +
+      '</select>';
+    box.querySelector('[data-size=p]').onchange = ev => {
+      if (!ev.target.value) return;
+      const p = ev.target.value.split('x');
+      box.querySelector('[data-size=w]').value = p[0];
+      box.querySelector('[data-size=h]').value = p[1];
+      if (typeof queueSave === 'function') queueSave();
+    };
+    box.dataset.sizeKey = f.key;
+    return box;
+  }
+
+  if (f.enum){
+    const list = OPTIONS[f.enumClass + '.' + f.enumField];
+    if (Array.isArray(list) && list.length){
+      const sel = document.createElement('select');
+      sel.dataset.key = f.key;
+      for (const v of list){
+        const o = document.createElement('option'); o.value = v; o.textContent = v;
+        sel.appendChild(o);
+      }
+      sel.value = f.value;
+      return sel;
+    }
+    if (list === undefined){
+      const ph = document.createElement('input');
+      ph.dataset.key = f.key;
+      ph.value = f.value == null ? '' : f.value;
+      ph.placeholder = '选项加载中…';
+      return ph;
+    }
+  }
+
+  if (f.kind === 'bool'){
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.style.width = '15px'; cb.dataset.key = f.key;
+    cb.checked = !!f.value;
+    const txt = document.createElement('span');
+    txt.textContent = f.value ? '开' : '关';
+    cb.onchange = () => { txt.textContent = cb.checked ? '开' : '关'; };
+    row.appendChild(cb); row.appendChild(txt);
+    return row;
+  }
+
+  if (f.kind === 'int' || f.kind === 'float'){
+    const row = document.createElement('div');
+    row.className = 'seedrow';
+    const el = document.createElement('input');
+    el.type = 'number';
+    if (f.min !== undefined && f.min !== null) el.min = f.min;
+    if (f.max !== undefined && f.max !== null) el.max = f.max;
+    el.step = f.step !== undefined ? f.step : (f.kind === 'int' ? 1 : 0.1);
+    el.value = f.value == null ? '' : f.value;
+    el.dataset.key = f.key;
+    row.appendChild(el);
+    if (f.random_if_negative){
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = '随机';
+      b.onclick = () => { el.value = randomSeed(); };
+      row.appendChild(b);
+    }
+    return row;
+  }
+
+  if (f.kind === 'text' || f.multiline){
+    const ta = document.createElement('textarea');
+    ta.rows = f.rows || 3;
+    ta.value = f.value == null ? '' : f.value;
+    ta.dataset.key = f.key;
+    return ta;
+  }
+
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = f.value == null ? '' : f.value;
+  inp.dataset.key = f.key;
+  return inp;
+}
+
+function buildLoraEditor(f){
+  const box = document.createElement('div');
+  const head = document.createElement('div');
+  head.className = 'lora-head';
+  head.innerHTML = '<span></span><span>名称</span><span>权重</span><span></span>';
+  box.appendChild(head);
+
+  const dl = document.createElement('datalist');
+  dl.id = 'loraNames';
+  for (const n of (OPTIONS['LoraLoader.lora_name'] || [])){
+    const o = document.createElement('option'); o.value = n; dl.appendChild(o);
+  }
+  box.appendChild(dl);
+
+  const list = document.createElement('div');
+  list.id = 'loraBox';
+  list.dataset.key = f.key;
+  list.dataset.role = 'loras';
+  box.appendChild(list);
+
+  let items = [];
+  try { items = asLoraList(f.value); } catch (e) { items = []; }
+
+  const render = () => {
+    list.innerHTML = '';
+    items.forEach((it, i) => {
+      const row = document.createElement('div');
+      row.className = 'lora-row' + (it.active ? '' : ' off');
+      row.innerHTML =
+        '<input type="checkbox" ' + (it.active ? 'checked' : '') + '>' +
+        '<input type="text" list="loraNames" placeholder="搜 LoRA 名">' +
+        '<input type="number" step="0.05" min="-3" max="3">' +
+        '<button class="del" type="button" title="删除">×</button>';
+      row.querySelector('input[type=text]').value = it.name;
+      row.querySelector('input[type=text]').title = it.name;
+      row.querySelector('input[type=number]').value = Number(it.strength).toFixed(2);
+      const cb = row.querySelector('input[type=checkbox]');
+      cb.onchange = () => { items[i].active = cb.checked; row.classList.toggle('off', !cb.checked); };
+      row.querySelector('input[type=text]').oninput = e => {
+        items[i].name = e.target.value;
+        e.target.title = e.target.value;
+      };
+      row.querySelector('input[type=number]').oninput = e => {
+        const v = parseFloat(e.target.value);
+        items[i].strength = isNaN(v) ? 1 : v;
+      };
+      row.querySelector('.del').onclick = () => { items.splice(i, 1); render(); };
+      list.appendChild(row);
+    });
+    const add = document.createElement('button');
+    add.type = 'button'; add.className = 'addbtn'; add.textContent = '+ 添加 LoRA';
+    add.onclick = () => { items.push({name:'', strength:1, active:true}); render(); };
+    list.appendChild(add);
+    list._items = items;
+    list._render = render;
+  };
+  render();
+  list._items = items;
+  return box;
+}
+
+function boxSummary(g){
+  if (!g.fields.length) return '';
+  if (g.id.indexOf('sampler_') === 0){
+    const get = k => {
+      const f = g.fields.filter(x => x.input === k)[0];
+      return f ? (f.value === undefined || f.value === null ? '' : String(f.value)) : '';
+    };
+    const parts = [];
+    if (get('steps')) parts.push(get('steps') + '步');
+    if (get('cfg')) parts.push('CFG ' + get('cfg'));
+    if (get('sampler_name')) parts.push(get('sampler_name'));
+    return parts.join(' · ');
+  }
+  if (g.id === 'lora'){
+    const f = g.fields.filter(x => x.kind === 'loras')[0];
+    if (f){
+      let n = 0, t = 0;
+      try { const l = asLoraList(f.value); t = l.length; n = l.filter(x => x.active).length; } catch (e) {}
+      return t ? (n + ' / ' + t + ' 启用') : '无';
+    }
+  }
+  if (g.id === 'model') return g.fields.length + ' 个加载器';
+  if (g.id === 'size'){
+    const f = g.fields.filter(x => x.kind === 'size')[0];
+    if (f){ const m = String(f.value || '').match(/(\d+)x(\d+)/); return m ? m[1] + '×' + m[2] : ''; }
+  }
+  return '';
+}
+
+const collapsed = {};
+function renderParams(){
+  const root = $('leftScroll');
+  root.innerHTML = '';
+
+  if (SPEC.warnings && SPEC.warnings.length){
+    const n = document.createElement('div');
+    n.className = 'notes';
+    n.textContent = '⚠ ' + SPEC.warnings.join('；');
+    root.appendChild(n);
+  }
+
+  for (const g of SPEC.groups){
+    const box = document.createElement('div');
+    box.className = 'box' + (g.id.indexOf('sampler_') === 0 ? ' sampler' : '');
+
+    const bh = document.createElement('div');
+    bh.className = 'bh';
+    bh.innerHTML = '<span class="arw">▾</span><h2>' + g.title + '</h2>' +
+                   '<span class="sum"></span>';
+    bh.querySelector('.sum').textContent = boxSummary(g);
+
+    const body = document.createElement('div');
+    body.className = 'bbody';
+
+    if (g.id === 'prompt'){
+      for (const f of g.fields) body.appendChild(fieldWrap(f));
+    } else if (g.id === 'lora'){
+      for (const f of g.fields){
+        if (f.kind === 'loras'){
+          const w = document.createElement('div');
+          w.className = 'f';
+          w.appendChild(alabel(f.label || 'LoRA 列表'));
+          w.appendChild(buildLoraEditor(f));
+          body.appendChild(w);
+        } else {
+          body.appendChild(fieldWrap(f));
+        }
+      }
+    } else if (g.id === 'size'){
+      // 分辨率自己带一行三列（宽/高/预设），必须占满整行，否则会被挤扁
+      for (const f of g.fields) body.appendChild(fieldWrap(f));
+    } else if (g.id.indexOf('sampler_') === 0){
+      const nums = g.fields.filter(f => f.kind === 'int' || f.kind === 'float');
+      const rest = g.fields.filter(f => !(f.kind === 'int' || f.kind === 'float'));
+      for (const f of rest) body.appendChild(fieldWrap(f));
+      if (nums.length){
+        const grid = document.createElement('div');
+        grid.className = 'grid2';
+        for (const f of nums){
+          const w = document.createElement('div');
+          w.className = 'f';
+          w.appendChild(alabel(f.label || f.key));
+          w.appendChild(buildInput(f));
+          grid.appendChild(w);
+        }
+        body.appendChild(grid);
+      }
+    } else {
+      for (const f of g.fields) body.appendChild(fieldWrap(f));
+    }
+
+    bh.onclick = () => {
+      const hide = body.style.display !== 'none';
+      body.style.display = hide ? 'none' : '';
+      bh.querySelector('.arw').textContent = hide ? '▸' : '▾';
+      collapsed[g.id] = hide;
+      try { localStorage.setItem('cgu.collapsed', JSON.stringify(collapsed)); } catch (e) {}
+    };
+    if (collapsed[g.id]){
+      body.style.display = 'none';
+      bh.querySelector('.arw').textContent = '▸';
+    }
+
+    box.appendChild(bh);
+    box.appendChild(body);
+    root.appendChild(box);
+  }
+}
+
+/* ---- 读界面 ---- */
+function readUI(){
+  const v = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    if (el.type === 'checkbox') v[el.dataset.key] = el.checked;
+    else v[el.dataset.key] = el.value;
+  });
+  document.querySelectorAll('[data-size-key]').forEach(box => {
+    v[box.dataset.sizeKey] = box.querySelector('[data-size=w]').value + 'x' +
+                             box.querySelector('[data-size=h]').value;
+  });
+  document.querySelectorAll('[data-role=loras]').forEach(el => {
+    if (el._items) v[el.dataset.key] = el._items.map(x => ({name:x.name, strength:x.strength,
+                                                           active:x.active}));
+  });
+  return v;
+}
+
+/* 把一份参数值写回界面（快照恢复用） */
+function fillUI(p){
+  if (!p) return 0;
+  const fields = flattenFields(SPEC);
+  let n = 0;
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const k = el.dataset.key;
+    if (!(k in p)) return;
+    const v = p[k];
+    if (v === undefined || v === null) return;
+    if (el.tagName === 'SELECT'){
+      el.value = String(v);
+      if (el.value !== String(v)){
+        const f = fields.filter(x => x.key === k)[0] || {};
+        const fb = f.value != null ? f.value : '';
+        el.value = String(fb);
+        log('参数「' + (f.label || k) + '」的上次值（' + v + '）现在不可选，已回退到工作流原值',
+            'warn');
+        return;
+      }
+    } else if (el.type === 'checkbox'){
+      el.checked = !!v;
+      el.dispatchEvent(new Event('change'));
+    } else {
+      el.value = v;
+    }
+    n++;
+  });
+  document.querySelectorAll('[data-size-key]').forEach(box => {
+    const v = p[box.dataset.sizeKey];
+    if (!v) return;
+    const m = String(v).split('x');
+    if (m.length !== 2) return;
+    box.querySelector('[data-size=w]').value = m[0];
+    box.querySelector('[data-size=h]').value = m[1];
+    n++;
+  });
+  document.querySelectorAll('[data-role=loras]').forEach(el => {
+    const k = el.dataset.key;
+    if (!(k in p) || !Array.isArray(p[k]) || !el._items) return;
+    el._items.length = 0;
+    p[k].forEach(it => el._items.push({
+      name: String(it.name || ''),
+      strength: isNaN(Number(it.strength)) ? 1 : Number(it.strength),
+      active: it.active !== false
+    }));
+    if (el._render) el._render();
+    n++;
+  });
+  return n;
+}
+
+/* ---- 参数快照：按「工作流指纹」分键存进 localStorage ----
+   换工作流不会串参；刷新页面自动恢复上次调好的参数；
+   只有点「恢复内置」才会清掉存档、回到工作流默认值。 */
+
+function wfHash(wf){
+  const s = JSON.stringify(wf);
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++){
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16);
+}
+let SNAP_KEY = null;
+let saveTimer = null;
+
+function snapStoreKey(key){ return 'cgu.snap.' + key; }
+
+function saveSnapshot(){
+  if (!SNAP_KEY || !SPEC) return;
+  try {
+    localStorage.setItem(snapStoreKey(SNAP_KEY), JSON.stringify({
+      v: 1, at: Date.now(), name: WFNAME, values: readUI()
+    }));
+    pruneSnapshots(8);
+  } catch (e) { /* 隐私模式 / 配额满了就静默降级，不影响出图 */ }
+}
+function queueSave(){
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveSnapshot, 500);
+}
+function loadSnapshot(key){
+  const k = key || SNAP_KEY;
+  if (!k) return null;
+  try {
+    const raw = localStorage.getItem(snapStoreKey(k));
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return (o && o.values) ? o : null;
+  } catch (e) { return null; }
+}
+function clearSnapshot(key){
+  try { localStorage.removeItem(snapStoreKey(key || SNAP_KEY)); } catch (e) {}
+}
+function pruneSnapshots(max){
+  try {
+    const items = [];
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('cgu.snap.') !== 0) continue;
+      let at = 0;
+      try { at = (JSON.parse(localStorage.getItem(k)) || {}).at || 0; } catch (e) {}
+      items.push([k, at]);
+    }
+    items.sort((a, b) => b[1] - a[1]);
+    items.slice(max).forEach(it => localStorage.removeItem(it[0]));
+  } catch (e) {}
+}
+
+/* ---- 载入工作流 ---- */
+async function useWorkflow(wf, name, opts){
+  opts = opts || {};
+  WF = wf; WFNAME = name;
+  SPEC = scanWorkflow(wf);
+  SNAP_KEY = wfHash(wf);
+  OPTIONS = {};
+  $('pillWf').textContent = name;
+  $('pillArch').textContent = SPEC.nodeCount + ' 节点 · ' + SPEC.stats.fields + ' 参数' +
+    (SPEC.stats.samplers > 1 ? ' · ' + SPEC.stats.samplers + ' 采样器' : '');
+  $('title').textContent = 'ComfyUI Studio';
+  document.title = name + ' · ComfyUI Studio';
+  renderParams();
+  await prefetchOptions();
+  renderParams();
+  log('已载入 ' + name + '：' + SPEC.nodeCount + ' 节点，推导出 ' + SPEC.stats.fields + ' 个参数',
+      'ok');
+  if (SPEC.warnings.length) SPEC.warnings.forEach(w => log('  ' + w, 'warn'));
+
+  if (!opts.noSnapshot){
+    const snap = loadSnapshot();
+    if (snap){
+      fillUI(snap.values);
+      const t = new Date(snap.at || 0);
+      log('已恢复上次的参数（' + Object.keys(snap.values).length + ' 项，存于 ' +
+          (isNaN(t.getTime()) ? '未知时间' : t.toLocaleString()) + '）', 'ok');
+      log('想要工作流默认值：点右上「恢复内置」', 'dim');
+      return;
+    }
+  }
+  log('参数用工作流里的原值（该工作流暂无快照）', 'dim');
+}
+
+async function loadBuiltin(reset){
+  try {
+    const wf = await (await fetch(BUILTIN.url, {cache:'no-store'})).json();
+    if (reset) clearSnapshot(wfHash(wf));
+    await useWorkflow(wf, BUILTIN.name, {noSnapshot: !!reset});
+    if (reset) log('已恢复内置工作流，参数回到默认值（旧快照已清除）', 'ok');
+  } catch (e) {
+    log('载入内置工作流失败：' + e.message, 'err');
+    log('请在仓库根目录起服务：python -m http.server 5500 → /web/app.html', 'warn');
+  }
+}
+
+async function loadFile(file){
+  try {
+    const wf = JSON.parse(await file.text());
+    if (wf && wf.prompt && typeof wf.prompt === 'object'){
+      await useWorkflow(wf.prompt, file.name); return;
+    }
+    if (wf && Array.isArray(wf.nodes)){
+      log('这是 UI 格式工作流（含 nodes/links），请在 ComfyUI 里用「导出 (API)」重新导出', 'err');
+      return;
+    }
+    const keys = Object.keys(wf);
+    if (!keys.length || !wf[keys[0]].class_type){
+      log('不像 API 格式的工作流（节点缺少 class_type）', 'err');
+      return;
+    }
+    await useWorkflow(wf, file.name);
+  } catch (e) {
+    log('解析工作流失败：' + e.message, 'err');
+  }
+}
+
+$('btnLoad').onclick = () => $('file').click();
+$('file').onchange = e => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ''; };
+$('btnBuiltin').onclick = () => loadBuiltin(true);
+
+/* 参数一改就存快照（防抖 500ms），这样刷新页面不用重调 */
+const snapHost = $('leftScroll');
+snapHost.addEventListener('input', queueSave);
+snapHost.addEventListener('change', queueSave);
+snapHost.addEventListener('click', ev => {
+  if (ev.target && ev.target.tagName === 'BUTTON') queueSave();   // 「随机」「+ 添加 LoRA」等
+});
+
+const mask = $('dropmask');
+let dragDepth = 0;
+window.addEventListener('dragenter', e => {
+  e.preventDefault();
+  dragDepth++; mask.classList.add('on');
+});
+window.addEventListener('dragleave', e => {
+  e.preventDefault();
+  if (--dragDepth <= 0) mask.classList.remove('on');
+});
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  dragDepth = 0; mask.classList.remove('on');
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+$('pillBase').onclick = () => {
+  const v = prompt('ComfyUI 地址', baseUrl());
+  if (!v) return;
+  setBase(v.trim());
+  OPTIONS = {};
+  log('目标改为 ' + baseUrl(), 'dim');
+  prefetchOptions().then(renderParams);
+};
+$('btnRefresh').onclick = async () => {
+  log('刷新服务端选项…', 'acc');
+  OPTIONS = {};
+  await prefetchOptions();
+  renderParams();
+  log('已刷新', 'ok');
+};
+
+/* ---- 生成（支持连点排多个任务） ---- */
+const jobs = new Map();          // prompt_id -> {wf, state, t0}
+
+function activeJobCount(){
+  let n = 0;
+  jobs.forEach(j => { if (j.state !== 'done' && j.state !== 'failed') n++; });
+  return n;
+}
+function refreshGenLabel(){
+  const n = activeJobCount();
+  $('genLabel').textContent = n > 0 ? ('生成中… (' + n + ')') : '生 成';
+}
+
+/* 常驻 WebSocket：进度和结束事件都靠它，整个页面只连一条 */
+let wsOpened = false;
+function ensureWS(){
+  if (ws && (ws.readyState === 0 || ws.readyState === 1)) return Promise.resolve();
+  return new Promise(resolve => {
+    try {
+      ws = new WebSocket(baseUrl().replace(/^http/, 'ws') + '/ws?clientId=' + encodeURIComponent(clientId));
+    } catch (e) { log('WebSocket 创建失败：' + e.message, 'err'); resolve(); return; }
+
+    ws.onopen = () => { wsOpened = true; resolve(); };
+    ws.onerror = () => log('WebSocket 出错（不影响出图，只是没有进度）', 'warn');
+    ws.onclose = () => {
+      wsOpened = false;
+      ws = null;
+      // ComfyUI 重启或休眠时自动重连
+      setTimeout(() => { if (!ws) ensureWS(); }, 3000);
+    };
+    ws.onmessage = ev => {
+      if (typeof ev.data !== 'string') return;
+      let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+      const d = m.data || {};
+      const pid = d.prompt_id;
+      const job = pid ? jobs.get(pid) : null;
+
+      if (m.type === 'progress'){
+        // 队列是串行的，progress 一定属于当前正在跑的那个任务
+        const ratio = d.max ? d.value / d.max : 0;
+        setProg(ratio, '采样 ' + d.value + '/' + d.max);
+      } else if (m.type === 'executing'){
+        if (d.node === null){
+          if (job) completeJob(pid, job);
+        } else if (d.node){
+          if (job && job.state === 'queued'){
+            job.state = 'running';
+            setProg(0, '开始执行 ' + String(pid).slice(0, 8), '');
+          }
+          $('progText').textContent = '执行节点 ' + d.node;
+        }
+      } else if (m.type === 'execution_success'){
+        if (job) completeJob(pid, job);
+      } else if (m.type === 'execution_error'){
+        if (job){ job.state = 'failed'; jobs.delete(pid); }
+        log('执行报错：' + JSON.stringify(d).slice(0, 240), 'err');
+        setProg(0, '执行报错', '');
+        refreshGenLabel();
+        refreshQueue();
+      } else if (m.type === 'status'){
+        const q = d.status && d.status.exec_info && d.status.exec_info.queue_remaining;
+        if (typeof q === 'number' && !qTimer) setQueueBadge(q);
+      }
+    };
+    setTimeout(resolve, 2500);      // 连不上也别卡住提交
+  });
+}
+
+function completeJob(pid, job){
+  if (!job || job.state === 'done') return;
+  job.state = 'done';
+  const p = fetchResult(pid, job.wf);
+  const tail = () => {
+    jobs.delete(pid);
+    refreshGenLabel();
+    if (!activeJobCount()) setProg(1, '完成', '100%');
+    refreshQueue();
+  };
+  if (p && p.then) p.then(tail, tail); else tail();
+}
+
+$('btnGen').onclick = async () => {
+  let applied;
+  try { applied = applyParams(WF, SPEC, readUI()); }
+  catch (e) { log('参数有误：' + e.message, 'err'); return; }
+  saveSnapshot();                 // 提一次就落一次快照，刷新后参数不会丢
+
+  setProg(0, '提交中…', '');
+  log('POST ' + baseUrl() + '/prompt   ' + applied.changes.length + ' 处写入', 'acc');
+  for (const c of applied.changes){
+    if (c.input === 'loras'){
+      const n = (c.after.__value__ || []).filter(x => x.active).length;
+      log('  ' + c.node + '.loras = ' + n + ' 个启用', 'dim');
+      continue;
+    }
+    const s = typeof c.after === 'string' ? c.after : JSON.stringify(c.after);
+    log('  ' + c.node + '.' + c.input + ' = ' + (s.length > 52 ? s.slice(0, 50) + '…' : s), 'dim');
+  }
+
+  await ensureWS();
+  try {
+    const r = await call('/prompt', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({prompt: applied.wf, client_id: clientId})
+    });
+    if (!r.ok){ log(explain(r.err), 'err'); return; }
+    const j = await r.resp.json();
+    if (r.status !== 200){
+      log('HTTP ' + r.status + ' ' + JSON.stringify(j).slice(0, 460), 'err');
+      return;
+    }
+    const pid = j.prompt_id;
+    jobs.set(pid, {wf: applied.wf, state: 'queued', t0: Date.now()});
+    refreshGenLabel();
+    setProg(0, '已入队 ' + String(pid).slice(0, 8) + '，等待执行…', '');
+    log('已入队 ' + pid + '（当前未完成任务 ' + activeJobCount() + ' 个）', 'ok');
+    refreshQueue();
+  } catch (e) {
+    log('异常：' + e.message, 'err');
+    refreshGenLabel();
+  }
+};
+
+async function fetchResult(promptId, usedWf){
+  for (let i = 0; i < 90; i++){
+    const r = await call('/history/' + promptId);
+    if (r.ok && r.status === 200){
+      const j = await r.resp.json();
+      const e = j[promptId];
+      if (e){
+        const st = e.status || {};
+        if (st.status_str === 'error'){
+          const msg = (st.messages || []).filter(m => m[0] === 'execution_error')[0];
+          log('执行失败：' + (msg ? JSON.stringify(msg[1]).slice(0, 260) : '未知'), 'err');
+          setProg(0, '执行失败', '');
+          $('pillCount').textContent = '失败';
+          return;
+        }
+        const imgs = [];
+        for (const k in (e.outputs || {}))
+          for (const im of (e.outputs[k].images || [])) imgs.push(im);
+        if (imgs.length) return showImages(imgs, usedWf, promptId);
+      }
+    }
+    await new Promise(r => setTimeout(r, 700));
+  }
+  log('等图超时', 'err');
+  setProg(0, '超时', '');
+}
+
+async function showImages(imgs, usedWf, promptId){
+  let total = 0, last = null;
+  for (const im of imgs){
+    const item = await fetchImage(im);
+    if (!item) continue;
+    item.pid = promptId || null;
+    item.workflow = usedWf || null;     // 记下这次的图，↻ 才能套用参数
+    done.push(item);
+    total += item.size;
+    last = item;
+    log('取回 ' + im.filename + '  ' + (item.size / 1024).toFixed(1) + 'KB', 'ok');
+  }
+  renderGallery();
+  if (last) selectDone(done.length - 1);
+  persistDone();                    // 新图落进 sessionStorage，刷新后能接回来
+  setProg(1, '完成', '100%');
+  $('pillCount').textContent = imgs.length + ' 张 · ' + (total / 1024).toFixed(0) + 'KB';
+  refreshQueue();
+}
+
+/* ---- 隐藏 / 显示（模糊处理，截图防窥） ---- */
+const BLUR_KEY = 'cgu.blur';
+function setBlurred(on){
+  document.body.classList.toggle('blurred', !!on);
+  $('btnBlur').textContent = on ? '显示图片' : '隐藏图片';
+  try { localStorage.setItem(BLUR_KEY, on ? '1' : '0'); } catch (e) {}
+}
+$('btnBlur').onclick = () => setBlurred(!document.body.classList.contains('blurred'));
+$('blurHint').onclick = () => setBlurred(false);
+
+/* ---- 启动 ---- */
+try {
+  const c = JSON.parse(localStorage.getItem('cgu.collapsed') || '{}');
+  Object.keys(c).forEach(k => { if (c[k]) collapsed[k] = true; });
+} catch (e) {}
+setBase(baseUrl());
+$('pillOrigin').textContent = 'origin ' + location.origin;
+setProg(0, '空闲', '');
+resetStage();
+renderGallery();
+restoreDone();                 // 把上次会话（刷新前）的缩略图接回来
+ensureWS();
+loadBuiltin();
+refreshQueue();
+try { setBlurred(localStorage.getItem(BLUR_KEY) === '1'); } catch (e) { setBlurred(false); }
+/* 空闲时也定期刷一次队列数（不生成也能看到别人塞进来的任务） */
+setInterval(() => {
+  if (qTimer) return;                                   // 弹窗开着时由 2s 轮询负责
+  if (document.visibilityState !== 'visible') return;
+  refreshQueue();
+}, 6000);
+log('就绪。参数会自动存快照（刷新不丢），点「恢复内置」才回默认值', 'dim');
+log('右上「载入工作流 (API)」或把 json 拖进窗口可换成自己的工作流', 'dim');
+</script>
+</body>
+</html>

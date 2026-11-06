@@ -1,0 +1,492 @@
+{
+  "43": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_scuae_00004_.png&type=temp&subfolder=&rand=0.8520126468783068"
+          }
+        ]
+      },
+      "image_a": [
+        "787",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "高清放大/Base生成"
+    }
+  },
+  "769": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "加载VAE"
+    }
+  },
+  "770": {
+    "inputs": {
+      "clip_name": "qwen3.5_9b_int8_convrot.safetensors",
+      "type": "moss_image",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "加载CLIP"
+    }
+  },
+  "784": {
+    "inputs": {
+      "seed": -1
+    },
+    "class_type": "Seed (rgthree)",
+    "_meta": {
+      "title": "随机种子"
+    }
+  },
+  "787": {
+    "inputs": {
+      "samples": [
+        "1134",
+        0
+      ],
+      "vae": [
+        "769",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE解码"
+    }
+  },
+  "908": {
+    "inputs": {
+      "group_mode": true,
+      "default_active": true,
+      "allow_strength_adjustment": false,
+      "toggle_trigger_words": {
+        "__value__": [
+          {
+            "text": "@ba nai",
+            "active": true,
+            "highlighted": false,
+            "strength": null,
+            "items": [
+              {
+                "text": "@ba nai",
+                "active": true,
+                "highlighted": false,
+                "strength": null
+              }
+            ]
+          },
+          {
+            "text": "@m8style",
+            "active": true,
+            "highlighted": false,
+            "strength": null,
+            "items": [
+              {
+                "text": "@m8style",
+                "active": true,
+                "highlighted": false,
+                "strength": null
+              }
+            ]
+          },
+          {
+            "text": "@cunnyfunky",
+            "active": true,
+            "highlighted": false,
+            "strength": null,
+            "items": [
+              {
+                "text": "@cunnyfunky",
+                "active": true,
+                "highlighted": false,
+                "strength": null
+              }
+            ]
+          },
+          {
+            "text": "@nyalia",
+            "active": true,
+            "highlighted": false,
+            "strength": null,
+            "items": [
+              {
+                "text": "@nyalia",
+                "active": true,
+                "highlighted": false,
+                "strength": null
+              }
+            ]
+          },
+          {
+            "text": "@neoanime",
+            "active": true,
+            "highlighted": false,
+            "strength": null,
+            "items": [
+              {
+                "text": "@neoanime",
+                "active": true,
+                "highlighted": false,
+                "strength": null
+              }
+            ]
+          }
+        ]
+      },
+      "orinalMessage": "@ba nai,, @m8style,, @cunnyfunky,, @nyalia,, @neoanime",
+      "trigger_words": [
+        "1135",
+        2
+      ]
+    },
+    "class_type": "TriggerWord Toggle (LoraManager)",
+    "_meta": {
+      "title": "触发词切换 (Lora管理器)"
+    }
+  },
+  "960": {
+    "inputs": {
+      "filename_prefix": "Moss/ComfyUI",
+      "images": [
+        "787",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "保存图像"
+    }
+  },
+  "969": {
+    "inputs": {
+      "anything": [
+        "787",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "清理显存占用"
+    }
+  },
+  "970": {
+    "inputs": {
+      "delay": 0.8,
+      "any": [
+        "969",
+        0
+      ]
+    },
+    "class_type": "easy sleep",
+    "_meta": {
+      "title": "延迟执行"
+    }
+  },
+  "1122": {
+    "inputs": {
+      "unet_name": "moss_image_base_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNet加载器"
+    }
+  },
+  "1134": {
+    "inputs": {
+      "seed": [
+        "784",
+        0
+      ],
+      "steps": 50,
+      "cfg": 4,
+      "sampler_name": "euler",
+      "scheduler": "sgm_uniform",
+      "denoise": 1,
+      "model": [
+        "1148",
+        0
+      ],
+      "positive": [
+        "1158",
+        0
+      ],
+      "negative": [
+        "1153",
+        1
+      ],
+      "latent_image": [
+        "1146",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "K采样器"
+    }
+  },
+  "1135": {
+    "inputs": {
+      "__lm_autocomplete_meta_text": {
+        "version": 1,
+        "textWidgetName": "text"
+      },
+      "text": "<lora:ba_style_moss_uma_v1_1000:0.45> <lora:cunnyfunky_moss_v1_lokr:0.60> <lora:HIKA-moss:0.50> <lora:orangeo_style_moss_step800:0.50> <lora:moss_image_base_8steps_dmd2:1.00> <lora:moss_context_detaile_tweaker_20261018_rank2:0.75> <lora:Nyalia_moss_v1_lokr:0.70> <lora:modare_style_moss_uma_v1:0.45> <lora:E794BBE9A38ENai5EFBC88E585.VFG8:0.65> <lora:moss_RBEv1_lora:0.55> <lora:fymrie_style_moss_uma_v1:0.50> <lora:silverpalace _style_moss_uma_v1:0.35> <lora:fuzichoco_style_moss_uma_v1:1.00>",
+      "loras": {
+        "__value__": [
+          {
+            "name": "moss_image_base_8steps_dmd2",
+            "strength": "1.00",
+            "active": false,
+            "expanded": false,
+            "clipStrength": "1.00",
+            "locked": false
+          },
+          {
+            "name": "moss_context_detaile_tweaker_20261018_rank2",
+            "strength": "0.75",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.75",
+            "locked": false
+          },
+          {
+            "name": "ba_style_moss_uma_v1_1000",
+            "strength": "0.45",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.45",
+            "locked": false
+          },
+          {
+            "name": "HIKA-moss",
+            "strength": "0.50",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.50",
+            "locked": false
+          },
+          {
+            "name": "modare_style_moss_uma_v1",
+            "strength": "0.45",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.45",
+            "locked": false
+          },
+          {
+            "name": "cunnyfunky_moss_v1_lokr",
+            "strength": "0.60",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.60",
+            "locked": false
+          },
+          {
+            "name": "orangeo_style_moss_step800",
+            "strength": "0.50",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.50",
+            "locked": false
+          },
+          {
+            "name": "Nyalia_moss_v1_lokr",
+            "strength": "0.70",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.70",
+            "locked": false
+          },
+          {
+            "name": "E794BBE9A38ENai5EFBC88E585.VFG8",
+            "strength": "0.65",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.65",
+            "locked": false
+          },
+          {
+            "name": "fymrie_style_moss_uma_v1",
+            "strength": "0.50",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.50",
+            "locked": false
+          },
+          {
+            "name": "moss_RBEv1_lora",
+            "strength": "0.55",
+            "active": true,
+            "expanded": false,
+            "clipStrength": "0.55",
+            "locked": false
+          },
+          {
+            "name": "silverpalace _style_moss_uma_v1",
+            "strength": "0.35",
+            "active": false,
+            "expanded": false,
+            "clipStrength": "0.35",
+            "locked": false
+          },
+          {
+            "name": "fuzichoco_style_moss_uma_v1",
+            "strength": 1,
+            "active": false,
+            "expanded": false,
+            "clipStrength": 1,
+            "locked": false
+          }
+        ]
+      },
+      "model": [
+        "1122",
+        0
+      ],
+      "clip": [
+        "770",
+        0
+      ]
+    },
+    "class_type": "Lora Loader (LoraManager)",
+    "_meta": {
+      "title": "LoRA加载器 (Lora管理器)"
+    }
+  },
+  "1136": {
+    "inputs": {},
+    "class_type": "QuickGroupManager",
+    "_meta": {
+      "title": "⚡ 快速组管理器"
+    }
+  },
+  "1140": {
+    "inputs": {
+      "resolution_json": "{\"version\":1,\"width\":1024,\"height\":1536}"
+    },
+    "class_type": "ResolutionPreset",
+    "_meta": {
+      "title": "📐 分辨率预设"
+    }
+  },
+  "1146": {
+    "inputs": {
+      "width": [
+        "1140",
+        0
+      ],
+      "height": [
+        "1140",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "空Latent图像（Flux2）"
+    }
+  },
+  "1148": {
+    "inputs": {
+      "double_layers": "",
+      "single_layers": "22",
+      "start_percent": 0,
+      "end_percent": 1,
+      "model": [
+        "1154",
+        0
+      ]
+    },
+    "class_type": "SkipLayerGuidanceDiTSimple",
+    "_meta": {
+      "title": "跳过层引导（DiT简化）"
+    }
+  },
+  "1153": {
+    "inputs": {
+      "positive": "bad quality, worst quality, low quality, worst detail, lowres, bad anatomy, old, early, artist name, copyright name, artist name, jpeg artifacts, watermark, signature,",
+      "auto_random": false,
+      "temp_str": "[{\"id\":\"token_3_1792478628156\",\"text\":\"bad quality\",\"translate\":\"bad quality\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_1_1792478628156\",\"text\":\"worst quality\",\"translate\":\"worst quality\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_2_1792478628156\",\"text\":\"low quality\",\"translate\":\"low quality\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_4_1792478628156\",\"text\":\"worst detail\",\"translate\":\"worst detail\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_6_1792478628156\",\"text\":\"lowres\",\"translate\":\"低分辨率\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_4_1792493368846\",\"text\":\"bad anatomy\",\"translate\":\"bad anatomy\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_7_1792478628156\",\"text\":\"old\",\"translate\":\"老年\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_5_1792493368846\",\"text\":\"early\",\"translate\":\"early\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_4_1792472955156\",\"text\":\"artist name\",\"translate\":\"artist name\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_6_1792493368846\",\"text\":\"copyright name\",\"translate\":\"copyright name\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_7_1792493368846\",\"text\":\"artist name\",\"translate\":\"artist name\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_8_1792493368846\",\"text\":\"jpeg artifacts\",\"translate\":\"jpeg artifacts\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_13_1792472955157\",\"text\":\"watermark\",\"translate\":\"水印\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_14_1792472955157\",\"text\":\"signature\",\"translate\":\"签名\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_1_1793112755033\",\"text\":\"realistic\",\"translate\":\"写实\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_2_1793112761884\",\"text\":\"surreal\",\"translate\":\"超现实\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false}]",
+      "random_template": "",
+      "打开提示词编辑器": "",
+      "opt_clip": [
+        "1135",
+        1
+      ]
+    },
+    "class_type": "WeiLinPromptUIWithoutLora",
+    "_meta": {
+      "title": "负面提示词"
+    }
+  },
+  "1154": {
+    "inputs": {
+      "attention": "comfy kitchen attention",
+      "model": [
+        "1135",
+        0
+      ]
+    },
+    "class_type": "ModelAttentionBackend",
+    "_meta": {
+      "title": "模型注意力后端"
+    }
+  },
+  "1157": {
+    "inputs": {
+      "inputcount": 2,
+      "delimiter": ", ",
+      "return_list": false,
+      "Update inputs": null,
+      "string_1": [
+        "908",
+        0
+      ],
+      "string_2": [
+        "1160",
+        0
+      ]
+    },
+    "class_type": "JoinStringMulti",
+    "_meta": {
+      "title": "合并字符串（多重）"
+    }
+  },
+  "1158": {
+    "inputs": {
+      "text": [
+        "1157",
+        0
+      ],
+      "clip": [
+        "1135",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP文本编码"
+    }
+  },
+  "1160": {
+    "inputs": {
+      "positive": ""
+    },
+    "class_type": "easy positive",
+    "_meta": {
+      "title": "正面提示词"
+    }
+  }
+}
