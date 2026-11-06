@@ -10,11 +10,6 @@ tools/cloud/
 .env
 .env.local
 
-# 个人简历相关（含手机号/邮箱，不公开）
-docs/
-*.docx
-*.pdf
-
 # 编辑器 / 系统
 .vscode/
 .idea/
